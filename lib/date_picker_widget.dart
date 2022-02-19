@@ -219,6 +219,13 @@ class _DatePickerState extends State<DatePicker> {
         date1.month == date2.month &&
         date1.year == date2.year;
   }
+
+  void setDate(DateTime date) {
+    setState(() {
+      _currentDate = date;
+    });
+  }
+
 }
 
 class DatePickerController {
@@ -226,6 +233,10 @@ class DatePickerController {
 
   void setDatePickerState(_DatePickerState state) {
     _datePickerState = state;
+  }
+
+  void setDateTime(DateTime dateTime) {
+    _datePickerState?.setDate(dateTime);
   }
 
   void jumpToSelection() {
