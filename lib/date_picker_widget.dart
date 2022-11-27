@@ -1,11 +1,11 @@
-
-
 import 'package:date_picker_timeline/date_widget.dart';
 import 'package:date_picker_timeline/extra/color.dart';
 import 'package:date_picker_timeline/extra/style.dart';
 import 'package:date_picker_timeline/gestures/tap.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
+enum DateSelectionAlignment { left, center, right }
 
 class DatePicker extends StatefulWidget {
   /// Start Date in case user wants to show past dates
@@ -40,7 +40,7 @@ class DatePicker extends StatefulWidget {
   final TextStyle dateTextStyle;
 
   /// Current Selected Date
-  final DateTime?/*?*/ initialSelectedDate;
+  final DateTime? /*?*/ initialSelectedDate;
 
   /// Contains the list of inactive dates.
   /// All the dates defined in this List will be deactivated
@@ -60,6 +60,8 @@ class DatePicker extends StatefulWidget {
   /// Locale for the calendar default: en_us
   final String locale;
 
+  final DateSelectionAlignment dateSelectionAlignment;
+
   DatePicker(
     this.startDate, {
     Key? key,
@@ -77,6 +79,7 @@ class DatePicker extends StatefulWidget {
     this.inactiveDates,
     this.daysCount = 500,
     this.onDateChange,
+    this.dateSelectionAlignment = DateSelectionAlignment.center,
     this.locale = "en_US",
   }) : assert(
             activeDates == null || inactiveDates == null,
@@ -100,6 +103,8 @@ class _DatePickerState extends State<DatePicker> {
   late final TextStyle deactivatedMonthStyle;
   late final TextStyle deactivatedDayStyle;
 
+  late final DateSelectionAlignment dateSelectionAlignment;
+
   @override
   void initState() {
     // Init the calendar locale
@@ -112,9 +117,9 @@ class _DatePickerState extends State<DatePicker> {
     }
 
     this.selectedDateStyle =
-      widget.dateTextStyle.copyWith(color: widget.selectedTextColor);
+        widget.dateTextStyle.copyWith(color: widget.selectedTextColor);
     this.selectedMonthStyle =
-      widget.monthTextStyle.copyWith(color: widget.selectedTextColor);
+        widget.monthTextStyle.copyWith(color: widget.selectedTextColor);
     this.selectedDayStyle =
         widget.dayTextStyle.copyWith(color: widget.selectedTextColor);
 
@@ -124,6 +129,7 @@ class _DatePickerState extends State<DatePicker> {
         widget.monthTextStyle.copyWith(color: widget.deactivatedColor);
     this.deactivatedDayStyle =
         widget.dayTextStyle.copyWith(color: widget.deactivatedColor);
+    this.dateSelectionAlignment = widget.dateSelectionAlignment;
 
     super.initState();
   }
@@ -201,6 +207,9 @@ class _DatePickerState extends State<DatePicker> {
               // A date is selected
               if (widget.onDateChange != null) {
                 widget.onDateChange!(selectedDate);
+                if (widget.controller != null) {
+                  widget.controller!.setDateAndAnimate(selectedDate);
+                }
               }
               setState(() {
                 _currentDate = selectedDate;
@@ -266,14 +275,15 @@ class DatePickerController {
   void setDateAndAnimate(DateTime date,
       {duration = const Duration(milliseconds: 500), curve = Curves.linear}) {
     assert(_datePickerState != null,
-    'DatePickerController is not attached to any DatePicker View.');
+        'DatePickerController is not attached to any DatePicker View.');
 
     _datePickerState!._controller.animateTo(_calculateDateOffset(date),
         duration: duration, curve: curve);
 
     if (date.compareTo(_datePickerState!.widget.startDate) >= 0 &&
-    date.compareTo(_datePickerState!.widget.startDate.add(
-        Duration(days: _datePickerState!.widget.daysCount))) <= 0) {
+        date.compareTo(_datePickerState!.widget.startDate
+                .add(Duration(days: _datePickerState!.widget.daysCount))) <=
+            0) {
       // date is in the range
       _datePickerState!._currentDate = date;
     }
@@ -288,6 +298,22 @@ class DatePickerController {
         _datePickerState!.widget.startDate.day);
 
     int offset = date.difference(startDate).inDays;
-    return (offset * _datePickerState!.widget.width) + (offset * 6);
+    double visibleOffset;
+
+    switch (_datePickerState!.dateSelectionAlignment) {
+      case DateSelectionAlignment.left:
+        visibleOffset = 0;
+        break;
+      case DateSelectionAlignment.center:
+        visibleOffset = _datePickerState!.widget.width * 5 / 2;
+        break;
+      case DateSelectionAlignment.right:
+        visibleOffset = _datePickerState!.widget.width * 4;
+        break;
+    }
+
+    return (offset * _datePickerState!.widget.width) +
+        (offset * 6) -
+        visibleOffset;
   }
 }
