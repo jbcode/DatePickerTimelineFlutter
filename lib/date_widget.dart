@@ -9,6 +9,8 @@ import 'package:date_picker_timeline/gestures/tap.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+enum DateWidgetType { day, month, year }
+
 class DateWidget extends StatelessWidget {
   final double? width;
   final DateTime date;
@@ -16,8 +18,10 @@ class DateWidget extends StatelessWidget {
   final Color selectionColor;
   final DateSelectionCallback? onDateSelected;
   final String? locale;
+  final DateWidgetType dateWidgetType;
 
   DateWidget({
+    this.dateWidgetType = DateWidgetType.day,
     required this.date,
     required this.monthTextStyle,
     required this.dayTextStyle,
@@ -27,6 +31,40 @@ class DateWidget extends StatelessWidget {
     this.onDateSelected,
     this.locale,
   });
+
+  List<Widget> getDateCellView() {
+    switch (dateWidgetType) {
+      case DateWidgetType.day:
+        return <Widget>[
+          Text(
+              new DateFormat("MMM", locale).format(date).toUpperCase(), // Month
+              style: monthTextStyle),
+          Text(date.day.toString(), // Date
+              style: dateTextStyle),
+          Text(
+              new DateFormat("E", locale).format(date).toUpperCase(), // WeekDay
+              style: dayTextStyle)
+        ];
+      case DateWidgetType.month:
+        return <Widget>[
+          Text(
+              new DateFormat("yyyy", locale).format(date).toUpperCase(), // Year
+              style: monthTextStyle),
+          Text(date.month.toString(), // Date
+              style: dateTextStyle),
+          Text(
+              new DateFormat("MMM", locale)
+                  .format(date)
+                  .toUpperCase(), // WeekDay
+              style: dayTextStyle)
+        ];
+      case DateWidgetType.year:
+        return <Widget>[
+          Text(date.year.toString(), // Date
+              style: dateTextStyle),
+        ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,14 +81,7 @@ class DateWidget extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(new DateFormat("MMM", locale).format(date).toUpperCase(), // Month
-                  style: monthTextStyle),
-              Text(date.day.toString(), // Date
-                  style: dateTextStyle),
-              Text(new DateFormat("E", locale).format(date).toUpperCase(), // WeekDay
-                  style: dayTextStyle)
-            ],
+            children: getDateCellView(),
           ),
         ),
       ),

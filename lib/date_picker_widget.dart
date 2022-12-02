@@ -62,6 +62,8 @@ class DatePicker extends StatefulWidget {
 
   final DateSelectionAlignment dateSelectionAlignment;
 
+  final DateWidgetType dateWidgetType;
+
   DatePicker(
     this.startDate, {
     Key? key,
@@ -80,6 +82,7 @@ class DatePicker extends StatefulWidget {
     this.daysCount = 500,
     this.onDateChange,
     this.dateSelectionAlignment = DateSelectionAlignment.center,
+    this.dateWidgetType = DateWidgetType.day,
     this.locale = "en_US",
   }) : assert(
             activeDates == null || inactiveDates == null,
@@ -146,8 +149,23 @@ class _DatePickerState extends State<DatePicker> {
           // get the date object based on the index position
           // if widget.startDate is null then use the initialDateValue
           DateTime date;
-          DateTime _date = widget.startDate.add(Duration(days: index));
-          date = new DateTime(_date.year, _date.month, _date.day);
+          int days = 0;
+          int months = 0;
+          int years = 0;
+          switch (widget.dateWidgetType) {
+            case DateWidgetType.day:
+              days = index;
+              break;
+            case DateWidgetType.month:
+              months = index;
+              break;
+            case DateWidgetType.year:
+              years = index;
+              break;
+          }
+
+          date = new DateTime(widget.startDate.year + years,
+              widget.startDate.month + months, widget.startDate.day + days);
 
           bool isDeactivated = false;
 
@@ -180,6 +198,7 @@ class _DatePickerState extends State<DatePicker> {
 
           // Return the Date Widget
           return DateWidget(
+            dateWidgetType: widget.dateWidgetType,
             date: date,
             monthTextStyle: isDeactivated
                 ? deactivatedMonthStyle
@@ -224,9 +243,16 @@ class _DatePickerState extends State<DatePicker> {
   /// Helper function to compare two dates
   /// Returns True if both dates are the same
   bool _compareDate(DateTime date1, DateTime date2) {
-    return date1.day == date2.day &&
-        date1.month == date2.month &&
-        date1.year == date2.year;
+    switch (widget.dateWidgetType) {
+      case DateWidgetType.day:
+        return date1.day == date2.day &&
+            date1.month == date2.month &&
+            date1.year == date2.year;
+      case DateWidgetType.month:
+        return date1.month == date2.month && date1.year == date2.year;
+      case DateWidgetType.year:
+        return date1.year == date2.year;
+    }
   }
 }
 
@@ -280,10 +306,28 @@ class DatePickerController {
     _datePickerState!._controller.animateTo(_calculateDateOffset(date),
         duration: duration, curve: curve);
 
+    int days = 0;
+    int months = 0;
+    int years = 0;
+    switch (_datePickerState!.widget.dateWidgetType) {
+      case DateWidgetType.day:
+        days = _datePickerState!.widget.daysCount;
+        break;
+      case DateWidgetType.month:
+        months = _datePickerState!.widget.daysCount;
+        break;
+      case DateWidgetType.year:
+        years = _datePickerState!.widget.daysCount;
+        break;
+    }
+
+    DateTime newDate = new DateTime(
+        _datePickerState!.widget.startDate.year + years,
+        _datePickerState!.widget.startDate.month + months,
+        _datePickerState!.widget.startDate.day + days);
+
     if (date.compareTo(_datePickerState!.widget.startDate) >= 0 &&
-        date.compareTo(_datePickerState!.widget.startDate
-                .add(Duration(days: _datePickerState!.widget.daysCount))) <=
-            0) {
+        date.compareTo(newDate) <= 0) {
       // date is in the range
       _datePickerState!._currentDate = date;
     }
@@ -297,7 +341,19 @@ class DatePickerController {
         _datePickerState!.widget.startDate.month,
         _datePickerState!.widget.startDate.day);
 
-    int offset = date.difference(startDate).inDays;
+    int offset = 0;
+    switch (_datePickerState!.widget.dateWidgetType) {
+      case DateWidgetType.day:
+        offset = date.difference(startDate).inDays;
+        break;
+      case DateWidgetType.month:
+        offset = (date.difference(startDate).inDays / 30).toInt();
+        break;
+      case DateWidgetType.year:
+        offset = (date.difference(startDate).inDays / 30 / 12).toInt();
+        break;
+    }
+
     double visibleOffset;
 
     switch (_datePickerState!.dateSelectionAlignment) {

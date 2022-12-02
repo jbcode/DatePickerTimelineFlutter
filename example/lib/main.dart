@@ -1,4 +1,5 @@
 import 'package:date_picker_timeline/date_picker_timeline.dart';
+import 'package:date_picker_timeline/date_widget.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -66,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Container(
                 child: DatePicker(
-                  DateTime(2022),
+                  DateTime(2018),
                   controller: _controller,
                   initialSelectedDate: DateTime.now(),
                   selectionColor: Colors.black,
@@ -77,6 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     DateTime.now().add(Duration(days: 7))
                   ],
                   dateSelectionAlignment: DateSelectionAlignment.left,
+                  dateWidgetType: DateWidgetType.month,
                   onDateChange: (date) {
                     // New date selected
                     setState(() {
